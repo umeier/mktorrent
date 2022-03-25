@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/polvi/mktorrent"
+	"github.com/umeier/mktorrent"
 	"net/http"
 	"net/url"
 	"os"
@@ -29,7 +29,7 @@ func main() {
 		os.Exit(1)
 	}
 	filename := filepath.Base(ur.Path)
-	t, err := mktorrent.MakeTorrent(res.Body, filename, *u, "udp://tracker.openbittorrent.com:80/announce", "udp://tracker.publicbt.com:80")
+	t, err := mktorrent.MakeTorrent(res.Body, filename, []string{"udp://tracker.openbittorrent.com:80/announce", "udp://tracker.publicbt.com:80"}, []string{*u})
 	if err != nil {
 		fmt.Println(err)
 	}

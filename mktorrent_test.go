@@ -8,7 +8,7 @@ import (
 
 func TestMktorrent(t *testing.T) {
 	b := bytes.NewBufferString("test")
-	tor, err := MakeTorrent(b, "1.txt", "udp://tracker.openbittorrent.com:80/announce", "")
+	tor, err := MakeTorrent(b, "1.txt", []string{"udp://tracker.openbittorrent.com:80/announce"}, []string{"http://example.com/1.txt"})
 	if err != nil {
 		t.Fatal(err)
 	}

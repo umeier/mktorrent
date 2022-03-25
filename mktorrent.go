@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const piece_len = 512000
+const pieceLen = 512000
 
 type InfoDict struct {
 	Name        string `bencode:"name"`
@@ -17,13 +17,13 @@ type InfoDict struct {
 }
 
 type Torrent struct {
-	Info         InfoDict   `bencode:"info"`
-	AnnounceList [][]string `bencode:"announce-list,omitempty"`
-	Announce     string     `bencode:"announce,omitempty"`
-	CreationDate int64      `bencode:"creation date,omitempty"`
-	Comment      string     `bencode:"comment,omitempty"`
-	CreatedBy    string     `bencode:"created by,omitempty"`
-	UrlList      string     `bencode:"url-list,omitempty"`
+	Info         InfoDict `bencode:"info"`
+	AnnounceList []string `bencode:"announce-list,omitempty"`
+	Announce     string   `bencode:"announce,omitempty"`
+	CreationDate int64    `bencode:"creation date,omitempty"`
+	Comment      string   `bencode:"comment,omitempty"`
+	CreatedBy    string   `bencode:"created by,omitempty"`
+	UrlList      []string `bencode:"url-list,omitempty"`
 }
 
 func (t *Torrent) Save(w io.Writer) error {
@@ -36,23 +36,30 @@ func hashPiece(b []byte) []byte {
 	h.Write(b)
 	return h.Sum(nil)
 }
-func MakeTorrent(r io.Reader, name string, url string, ann ...string) (*Torrent, error) {
+func MakeTorrent(r io.Reader, name string, ann []string, url []string) (*Torrent, error) {
 	t := &Torrent{
-		AnnounceList: make([][]string, 0),
 		CreationDate: time.Now().Unix(),
 		CreatedBy:    "mktorrent.go",
 		Info: InfoDict{
 			Name:        name,
-			PieceLength: piece_len,
+			PieceLength: pieceLen,
 		},
-		UrlList: url,
 	}
-	// the outer list is tiers
-	for _, a := range ann {
-		t.AnnounceList = append(t.AnnounceList, []string{a})
+	if len(ann) == 1 {
+		t.Announce = ann[0]
+	} else {
+		for _, a := range ann {
+			t.AnnounceList = append(t.AnnounceList, a)
+		}
 	}
 
-	b := make([]byte, piece_len)
+	if len(url) > 0 {
+		for _, u := range url {
+			t.UrlList = append(t.UrlList, u)
+		}
+	}
+
+	b := make([]byte, pieceLen)
 	for {
 		n, err := io.ReadFull(r, b)
 		if err != nil && err != io.ErrUnexpectedEOF {
@@ -63,7 +70,7 @@ func MakeTorrent(r io.Reader, name string, url string, ann ...string) (*Torrent,
 			t.Info.Pieces += string(hashPiece(b))
 			t.Info.Length += n
 			break
-		} else if n == piece_len {
+		} else if n == pieceLen {
 			t.Info.Pieces += string(hashPiece(b))
 			t.Info.Length += n
 		} else {
