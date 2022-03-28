@@ -1,4 +1,4 @@
-package mktorrent
+package torrent
 
 import (
 	"bytes"

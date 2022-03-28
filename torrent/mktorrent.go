@@ -1,9 +1,10 @@
-package mktorrent
+package torrent
 
 import (
 	"crypto/sha1"
 	"github.com/zeebo/bencode"
 	"io"
+	"net/url"
 	"time"
 )
 
@@ -37,6 +38,11 @@ func hashPiece(b []byte) []byte {
 	return h.Sum(nil)
 }
 func MakeTorrent(r io.Reader, name string, ann []string, url []string) (*Torrent, error) {
+	urls := append(ann, url...)
+	err := checkUrlsAreValid(urls)
+	if err != nil {
+		return nil, err
+	}
 	t := &Torrent{
 		CreationDate: time.Now().Unix(),
 		CreatedBy:    "mktorrent.go",
@@ -45,12 +51,9 @@ func MakeTorrent(r io.Reader, name string, ann []string, url []string) (*Torrent
 			PieceLength: pieceLen,
 		},
 	}
-	if len(ann) == 1 {
-		t.Announce = ann[0]
-	} else {
-		for _, a := range ann {
-			t.AnnounceList = append(t.AnnounceList, a)
-		}
+	t.Announce = ann[0]
+	for _, a := range ann {
+		t.AnnounceList = append(t.AnnounceList, a)
 	}
 
 	if len(url) > 0 {
@@ -78,4 +81,14 @@ func MakeTorrent(r io.Reader, name string, ann []string, url []string) (*Torrent
 		}
 	}
 	return t, nil
+}
+
+func checkUrlsAreValid(urls []string) error {
+	for _, u := range urls {
+		_, err := url.ParseRequestURI(u)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
